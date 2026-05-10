@@ -1,8 +1,15 @@
 import { GoogleGenAI, Type } from '@google/genai';
 
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+let aiInstance: GoogleGenAI | null = null;
+function getAI() {
+  if (!aiInstance) {
+    aiInstance = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || 'MISSING_KEY' });
+  }
+  return aiInstance;
+}
 
 export async function generateCaption(topic: string, mood: string): Promise<string> {
+  const ai = getAI();
   const response = await ai.models.generateContent({
     model: "gemini-3.1-flash-lite", // fast model
     contents: `Generate a viral TikTok caption about: ${topic}. Mood/Vibe: ${mood}. Include appropriate emojis and spacing. Keep it engaging. Just return the caption text.`,
@@ -11,6 +18,7 @@ export async function generateCaption(topic: string, mood: string): Promise<stri
 }
 
 export async function generateHashtags(category: string): Promise<string[]> {
+  const ai = getAI();
   const response = await ai.models.generateContent({
     model: "gemini-3.1-flash-lite",
     contents: `Generate 15 viral TikTok hashtags for the category: ${category}. Return ONLY a JSON list of strings, e.g. ["#fyp", "#gaming", "#viral"]. Do not use markdown blocks.`,
@@ -31,6 +39,7 @@ export async function generateHashtags(category: string): Promise<string[]> {
 }
 
 export async function generateBio(keywords: string): Promise<string> {
+  const ai = getAI();
   const response = await ai.models.generateContent({
     model: "gemini-3.1-flash-lite",
     contents: `Generate a stylish, aesthetic TikTok bio using these keywords: ${keywords}. It must be 1 to 4 lines maximum. Use creative formatting and emojis. Return ONLY the bio text.`,
@@ -39,6 +48,7 @@ export async function generateBio(keywords: string): Promise<string> {
 }
 
 export async function generateVideoIdea(niche: string): Promise<{title: string, hook: string, description: string}> {
+  const ai = getAI();
   const response = await ai.models.generateContent({
     model: "gemini-3.1-flash-lite",
     contents: `Generate one viral TikTok video idea for the niche: ${niche}. Return ONLY valid JSON with keys: 'title', 'hook', 'description'.`,
