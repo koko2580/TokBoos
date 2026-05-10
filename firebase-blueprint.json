@@ -1,0 +1,52 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "User profile containing coins and subscription status.",
+      "type": "object",
+      "properties": {
+        "coins": { "type": "number", "description": "Current balance of coins used for AI generation." },
+        "isPremium": { "type": "boolean", "description": "Whether the user has an active premium subscription." },
+        "lastCoinClaim": { "type": "string", "description": "Timestamp string or server timestamp of last daily claim." }
+      },
+      "required": ["coins", "isPremium"]
+    },
+    "Favorite": {
+      "title": "Favorite",
+      "description": "A saved generation.",
+      "type": "object",
+      "properties": {
+        "type": { "type": "string", "enum": ["caption", "hashtag", "bio", "video_idea"] },
+        "content": { "type": "string" },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["type", "content"]
+    },
+    "Trend": {
+      "title": "Trend",
+      "description": "Trending topic or template.",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "category": { "type": "string" },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["title", "category"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/User" },
+      "description": "User profiles"
+    },
+    "/users/{userId}/favorites/{favoriteId}": {
+      "schema": { "$ref": "#/entities/Favorite" },
+      "description": "User's saved generations"
+    },
+    "/trends/{trendId}": {
+      "schema": { "$ref": "#/entities/Trend" },
+      "description": "Globally read-only trending items"
+    }
+  }
+}

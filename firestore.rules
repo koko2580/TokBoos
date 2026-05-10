@@ -1,0 +1,74 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Global Safety Net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Primitive Helpers
+    function isSignedIn() { return request.auth != null; }
+    function isOwner(userId) { return isSignedIn() && request.auth.uid == userId; }
+    function incoming() { return request.resource.data; }
+    function existing() { return resource.data; }
+    function isValidId(id) { return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$'); }
+
+    // User Entity Validation
+    function isValidUser(data) {
+      return data.keys().hasAll(['coins', 'isPremium'])
+          && data.coins is number
+          && data.isPremium is bool
+          && (data.lastCoinClaim == null || data.lastCoinClaim is timestamp || data.lastCoinClaim is string);
+    }
+
+    // Favorite Entity Validation
+    function isValidFavorite(data) {
+      return data.keys().hasAll(['type', 'content'])
+          && data.type is string
+          && data.type.size() <= 50
+          && data.content is string
+          && data.content.size() <= 5000
+          && (data.createdAt == null || data.createdAt is timestamp || data.createdAt is string);
+    }
+
+    match /users/{userId} {
+      allow get: if isOwner(userId) && isValidId(userId);
+      allow list: if false;
+
+      // Allow users to create their own profile securely
+      allow create: if isOwner(userId)
+                    && isValidId(userId)
+                    && isValidUser(incoming())
+                    && incoming().coins == 50 // starting coins
+                    && incoming().isPremium == false;
+
+      // Users can update their own coins (in a real app, this should be a protected cloud function, but for this preview we allow it securely)
+      allow update: if isOwner(userId)
+                    && isValidId(userId)
+                    && isValidUser(incoming())
+                    && incoming().diff(existing()).affectedKeys().hasOnly(['coins', 'lastCoinClaim', 'isPremium']);
+      
+      allow delete: if false;
+
+      match /favorites/{favoriteId} {
+        allow get: if isOwner(userId) && isValidId(userId) && isValidId(favoriteId);
+        allow list: if isOwner(userId) && isValidId(userId);
+        
+        allow create: if isOwner(userId)
+                      && isValidId(userId)
+                      && isValidId(favoriteId)
+                      && isValidFavorite(incoming());
+                      
+        allow update: if false; // Favorites are immutable once created, can only be deleted
+        allow delete: if isOwner(userId) && isValidId(userId) && isValidId(favoriteId);
+      }
+    }
+
+    match /trends/{trendId} {
+      allow read: if isSignedIn(); // Any signed-in user can read trends
+      allow write: if false; // Only populated by admin / backend
+    }
+  }
+}

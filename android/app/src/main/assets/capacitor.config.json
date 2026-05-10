@@ -1,0 +1,6 @@
+{
+	"appId": "com.tokboost.ai",
+	"appName": "TokBoost AI",
+	"webDir": "dist",
+	"bundledWebRuntime": false
+}
