@@ -1,7 +1,8 @@
 import { initializeApp } from 'firebase/app';
-import { getAuth, GoogleAuthProvider, signInWithPopup, signOut } from 'firebase/auth';
+import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, signOut, getRedirectResult } from 'firebase/auth';
 import { getFirestore, doc, getDoc, setDoc, getDocFromServer } from 'firebase/firestore';
 import firebaseConfig from '../../../firebase-applet-config.json';
+import { Capacitor } from '@capacitor/core';
 
 const app = initializeApp(firebaseConfig);
 export const db = getFirestore(app, firebaseConfig.firestoreDatabaseId);
@@ -23,11 +24,26 @@ testFirestoreConnection();
 
 export async function loginWithGoogle() {
   try {
-    const result = await signInWithPopup(auth, googleProvider);
-    return result.user;
+    if (Capacitor.isNativePlatform()) {
+      await signInWithRedirect(auth, googleProvider);
+      return null; // The app will redirect, so no immediate user
+    } else {
+      const result = await signInWithPopup(auth, googleProvider);
+      return result.user;
+    }
   } catch (error) {
     console.error("Login failed", error);
     throw error;
+  }
+}
+
+export async function checkRedirectResult() {
+  try {
+    const result = await getRedirectResult(auth);
+    return result?.user || null;
+  } catch (error) {
+    console.error("Redirect login failed", error);
+    return null;
   }
 }
 

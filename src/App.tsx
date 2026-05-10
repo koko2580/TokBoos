@@ -3,7 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate, useNavigate, useLocation } from
 import { onAuthStateChanged } from 'firebase/auth';
 import { Toaster, toast } from 'react-hot-toast';
 import { Home, Sparkles, TrendingUp, Bookmark, User, Zap } from 'lucide-react';
-import { auth } from './lib/firebase/config';
+import { auth, checkRedirectResult } from './lib/firebase/config';
 import { useStore } from './store';
 import clsx from 'clsx';
 import { AnimatePresence, motion } from 'framer-motion';
@@ -24,6 +24,9 @@ function AppContent() {
   const location = useLocation();
 
   useEffect(() => {
+    // Check for redirect result from Firebase Auth
+    checkRedirectResult().catch(console.error);
+
     const unsub = onAuthStateChanged(auth, async (u) => {
       setUser(u);
       if (u) {
