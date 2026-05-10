@@ -1,9 +1,9 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, ReactNode } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
 import { onAuthStateChanged } from 'firebase/auth';
 import { Toaster, toast } from 'react-hot-toast';
 import { Home, Sparkles, TrendingUp, Bookmark, User, Zap } from 'lucide-react';
-import { auth, checkRedirectResult } from './lib/firebase/config';
+import { auth } from './lib/firebase/config';
 import { useStore } from './store';
 import clsx from 'clsx';
 import { AnimatePresence, motion } from 'framer-motion';
@@ -24,9 +24,6 @@ function AppContent() {
   const location = useLocation();
 
   useEffect(() => {
-    // Check for redirect result from Firebase Auth
-    checkRedirectResult().catch(console.error);
-
     const unsub = onAuthStateChanged(auth, async (u) => {
       setUser(u);
       if (u) {
@@ -86,7 +83,7 @@ function AppContent() {
   );
 }
 
-function RequireAuth({ children }: { children: React.ReactNode }) {
+function RequireAuth({ children }: { children: ReactNode }) {
   const { user } = useStore();
   if (!user) return <Navigate to="/login" />;
   return <>{children}</>;
@@ -95,13 +92,14 @@ function RequireAuth({ children }: { children: React.ReactNode }) {
 function BottomNav() {
   const navigate = useNavigate();
   const location = useLocation();
+  const { language } = useStore();
 
   const tabs = [
-    { path: '/', icon: Home, label: 'Home' },
-    { path: '/tools', icon: Sparkles, label: 'AI Tools' },
-    { path: '/trends', icon: TrendingUp, label: 'Trends' },
-    { path: '/favorites', icon: Bookmark, label: 'Saved' },
-    { path: '/profile', icon: User, label: 'Profile' },
+    { path: '/', icon: Home, label: language === 'my' ? 'ပင်မ' : 'Home' },
+    { path: '/tools', icon: Sparkles, label: language === 'my' ? 'AI တူးလ်များ' : 'AI Tools' },
+    { path: '/trends', icon: TrendingUp, label: language === 'my' ? 'ရေပန်းစားမှုများ' : 'Trends' },
+    { path: '/favorites', icon: Bookmark, label: language === 'my' ? 'သိမ်းထားသည်များ' : 'Saved' },
+    { path: '/profile', icon: User, label: language === 'my' ? 'ပရိုဖိုင်' : 'Profile' },
   ];
 
   return (

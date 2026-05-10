@@ -5,7 +5,6 @@ const config: CapacitorConfig = {
   appId: 'com.tokboost.ai',
   appName: 'TokBoost AI',
   webDir: 'dist',
-  bundledWebRuntime: false,
   server: {
     allowNavigation: [
       '*.firebaseapp.com', // Allows Firebase Auth redirect flow inside WebView

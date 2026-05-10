@@ -17,6 +17,8 @@ interface AppState {
   isAdVisible: boolean;
   onAdComplete: (() => void) | null;
   generationsCount: number;
+  language: 'en' | 'my';
+  setLanguage: (lang: 'en' | 'my') => void;
   setUser: (user: FirebaseUser | null) => void;
   fetchAppUser: (uid: string) => Promise<void>;
   deductCoins: (amount: number) => Promise<boolean>;
@@ -33,6 +35,11 @@ export const useStore = create<AppState>((set, get) => ({
   isAdVisible: false,
   onAdComplete: null,
   generationsCount: 0,
+  language: (localStorage.getItem('tokboost_lang') as 'en' | 'my') || 'en',
+  setLanguage: (lang) => {
+    localStorage.setItem('tokboost_lang', lang);
+    set({ language: lang });
+  },
   setUser: (user) => set({ user }),
   
   showAdOverlay: (onComplete) => set({ isAdVisible: true, onAdComplete: onComplete || null }),

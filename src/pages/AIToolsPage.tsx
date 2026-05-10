@@ -1,50 +1,73 @@
 import { useState } from 'react';
 import { Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, Copy, Save, Loader2, Coins } from 'lucide-react';
+import { ArrowLeft, Copy, Save, Loader2, Coins, DownloadCloud, Lock, FileText } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { useStore } from '../store';
-import { generateCaption, generateHashtags, generateBio, generateVideoIdea } from '../lib/gemini';
+import { generateCaption, generateHashtags, generateBio, generateVideoIdea, generateScript } from '../lib/gemini';
 import { db } from '../lib/firebase/config';
 import { doc, setDoc } from 'firebase/firestore';
 
 export default function AIToolsPage() {
   const location = useLocation();
   const navigate = useNavigate();
+  const { language } = useStore();
 
   const isRoot = location.pathname === '/tools' || location.pathname === '/tools/';
+
+  const text = {
+    title: language === 'my' ? 'AI တူးလ်များ' : 'AI Generation Tools',
+    caption: language === 'my' ? 'စာတမ်း ဖန်တီးရန်' : 'Caption Generator',
+    hashtag: language === 'my' ? 'Hashtag ဖန်တီးရန်' : 'Hashtag Generator',
+    bio: language === 'my' ? 'Bio ဖန်တီးရန်' : 'Bio Generator',
+    idea: language === 'my' ? 'အကြံဉာဏ် ဖန်တီးရန်' : 'Video Ideas',
+    script: language === 'my' ? 'ဇာတ်ညွှန်း ရေးရန်' : 'Script Writer',
+    downloader: language === 'my' ? 'ဗီဒီယို ဒေါင်းလုပ်' : 'Video Downloader',
+    captionDesc: language === 'my' ? 'ဆွဲဆောင်မှုရှိသော စာသားများ' : 'Write viral hooks',
+    hashtagDesc: language === 'my' ? 'ရေပန်းစား Hashtags ရှာရန်' : 'Find trending tags',
+    bioDesc: language === 'my' ? 'ပရိုဖိုင် အသစ်ဖန်တီးရန်' : 'Aesthetic profile bios',
+    ideaDesc: language === 'my' ? 'အမြဲတမ်း အသစ်အသစ်' : 'Never run out of content',
+    scriptDesc: language === 'my' ? 'စက္ကန့် ၆၀ ဇာတ်ညွှန်း' : '60-second video flow',
+    dlDesc: language === 'my' ? 'Watermark မပါ (PRO)' : 'No watermark (PRO)'
+  };
 
   if (isRoot) {
     // If they click AI tools directly, just show the list
     return (
-      <div className="p-6 pt-12">
-        <h1 className="text-2xl font-bold mb-6">AI Generation Tools</h1>
+      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="p-6 pt-12 relative z-10 pb-24">
+        <h1 className="text-2xl font-bold mb-6 font-display">{text.title}</h1>
         <div className="flex flex-col gap-4">
-          <ToolCard title="Caption Generator" path="caption" desc="Write viral hooks" color="bg-pink-500" />
-          <ToolCard title="Hashtag Generator" path="hashtag" desc="Find trending tags" color="bg-cyan-400" />
-          <ToolCard title="Bio Generator" path="bio" desc="Aesthetic profile bios" color="bg-purple-500" />
-          <ToolCard title="Video Ideas" path="idea" desc="Never run out of content" color="bg-amber-500" />
+          <ToolCard title={text.caption} path="caption" desc={text.captionDesc} color="from-pink-500 to-rose-500" />
+          <ToolCard title={text.hashtag} path="hashtag" desc={text.hashtagDesc} color="from-cyan-400 to-blue-500" />
+          <ToolCard title={text.bio} path="bio" desc={text.bioDesc} color="from-purple-500 to-indigo-500" />
+          <ToolCard title={text.idea} path="idea" desc={text.ideaDesc} color="from-amber-400 to-orange-500" />
+          <ToolCard title={text.script} path="script" desc={text.scriptDesc} color="from-teal-400 to-emerald-500" />
+          <ToolCard title={text.downloader} path="downloader" desc={text.dlDesc} color="from-green-500 to-emerald-600" />
         </div>
-      </div>
+      </motion.div>
     );
   }
 
+  const toolName = location.pathname.split('/').pop();
+
   return (
-    <div className="h-full relative flex flex-col pt-8">
+    <div className="h-full relative flex flex-col pt-8 pb-24">
       {/* Universal header for tools */}
-      <div className="flex items-center px-4 py-4 border-b border-white/10 z-20 bg-black/80 backdrop-blur-md sticky top-0">
-        <button onClick={() => navigate(-1)} className="p-2 -ml-2 text-gray-400 hover:text-white transition">
+      <div className="flex items-center px-4 py-4 border-b border-white/5 z-20 bg-black/80 backdrop-blur-md sticky top-0">
+        <button onClick={() => navigate(-1)} className="p-2 -ml-2 text-gray-400 hover:text-white transition rounded-full hover:bg-white/5">
           <ArrowLeft className="w-6 h-6" />
         </button>
-        <h2 className="ml-2 font-bold text-lg capitalize">{location.pathname.split('/').pop()} Generator</h2>
+        <h2 className="ml-2 font-bold text-lg capitalize font-display">{toolName} Generator</h2>
       </div>
 
-      <div className="flex-1 overflow-y-auto px-4 py-6">
+      <div className="flex-1 overflow-y-auto px-4 py-6 relative z-10">
         <Routes>
           <Route path="caption" element={<CaptionTool />} />
           <Route path="hashtag" element={<HashtagTool />} />
           <Route path="bio" element={<BioTool />} />
           <Route path="idea" element={<IdeaTool />} />
+          <Route path="script" element={<ScriptTool />} />
+          <Route path="downloader" element={<DownloaderTool />} />
         </Routes>
       </div>
     </div>
@@ -54,13 +77,19 @@ export default function AIToolsPage() {
 function ToolCard({ title, path, desc, color }: { title: string, path: string, desc: string, color: string }) {
   const nav = useNavigate();
   return (
-    <div onClick={() => nav(path)} className="bg-gray-900 border border-gray-800 rounded-2xl p-4 flex items-center gap-4 active:scale-[0.98]">
-      <div className={`w-3 h-12 rounded-full ${color}`} />
-      <div>
-        <h3 className="font-bold">{title}</h3>
-        <p className="text-xs text-gray-400">{desc}</p>
+    <motion.div 
+      initial={{ y: 10, opacity: 0 }}
+      animate={{ y: 0, opacity: 1 }}
+      onClick={() => nav(path)} 
+      className="bg-black/40 border border-white/5 hover:border-white/10 transition-colors rounded-2xl p-4 flex items-center gap-4 active:scale-[0.98] shadow-lg group cursor-pointer overflow-hidden relative"
+    >
+      <div className={`absolute -right-10 -top-10 w-32 h-32 bg-gradient-to-br ${color} opacity-10 rounded-full blur-2xl pointer-events-none group-hover:opacity-20 transition-opacity`} />
+      <div className={`w-3 h-12 rounded-full bg-gradient-to-b ${color}`} />
+      <div className="relative z-10">
+        <h3 className="font-bold text-white mb-0.5">{title}</h3>
+        <p className="text-[11px] text-gray-400">{desc}</p>
       </div>
-    </div>
+    </motion.div>
   );
 }
 
@@ -276,9 +305,45 @@ function IdeaTool() {
             <span className="text-[10px] text-amber-500 font-bold uppercase tracking-widest">Description</span>
             <p className="text-sm text-gray-300">{idea.description}</p>
           </div>
-          <ResultActions text={`Idea: ${idea.title}\nHook: ${idea.hook}`} type="video_idea" user={user} />
+          <ResultActions text={`Idea: ${idea.title}\nHook: ${idea.hook}\nDesc: ${idea.description}`} type="video_idea" user={user} />
         </div>
       )}
+    </div>
+  );
+}
+
+function ScriptTool() {
+  const [topic, setTopic] = useState('');
+  const [result, setResult] = useState('');
+  const [loading, setLoading] = useState(false);
+  const { user, deductCoins } = useStore();
+
+  const handleGenerate = async () => {
+    if (!topic.trim()) return toast.error("Enter a topic!");
+    setLoading(true);
+    if (!(await deductCoins(GENERATION_COST))) {
+      toast.error('Not enough coins!');
+      setLoading(false); return;
+    }
+    
+    const executeGen = async () => {
+      try {
+        setResult(await generateScript(topic));
+      } finally { setLoading(false); }
+    };
+    
+    useStore.getState().triggerGenerationAd(executeGen, executeGen);
+  }
+
+  return (
+    <div className="flex flex-col h-full gap-4 relative z-10">
+      <textarea 
+        placeholder="What should the 60s script be about?"
+        className="w-full bg-gray-900 border border-gray-700 rounded-xl p-4 text-white h-24"
+        value={topic} onChange={e => setTopic(e.target.value)}
+      />
+      <GenerateButton onClick={handleGenerate} loading={loading} />
+      <ResultBox result={result} type="script" user={user} />
     </div>
   );
 }
@@ -286,7 +351,8 @@ function IdeaTool() {
 // === SHARED COMPONENTS ===
 
 function GenerateButton({ onClick, loading }: { onClick: () => void, loading: boolean }) {
-  const { appUser } = useStore();
+  const { appUser, language } = useStore();
+  const generateText = language === 'my' ? 'ဖန်တီးမည်' : 'Generate';
   return (
     <button 
       onClick={onClick} disabled={loading}
@@ -294,7 +360,7 @@ function GenerateButton({ onClick, loading }: { onClick: () => void, loading: bo
     >
       {loading ? <Loader2 className="animate-spin w-5 h-5" /> : (
         <>
-          Generate <span className="text-xs bg-gray-200 px-2 py-0.5 rounded-full flex items-center gap-1"><Coins className="w-3 h-3 text-yellow-600"/> {appUser?.isPremium ? '0' : GENERATION_COST}</span>
+          {generateText} <span className="text-xs bg-gray-200 px-2 py-0.5 rounded-full flex items-center gap-1"><Coins className="w-3 h-3 text-yellow-600"/> {appUser?.isPremium ? '0' : GENERATION_COST}</span>
         </>
       )}
     </button>
@@ -312,9 +378,11 @@ function ResultBox({ result, type, user }: { result: string, type: string, user:
 }
 
 function ResultActions({ text, type, user }: { text: string, type: string, user: any }) {
+  const { language } = useStore();
+  
   const handleCopy = () => {
     navigator.clipboard.writeText(text);
-    toast.success("Copied to clipboard!");
+    toast.success(language === 'my' ? "ကူးယူပီးပါပြီ" : "Copied to clipboard!");
   };
 
   const handleSave = async () => {
@@ -324,20 +392,114 @@ function ResultActions({ text, type, user }: { text: string, type: string, user:
       await setDoc(doc(db, 'users', user.uid, 'favorites', favId), {
         type, content: text, createdAt: new Date().toISOString()
       });
-      toast.success("Saved to favorites!");
+      toast.success(language === 'my' ? "သိမ်းဆည်းပေးပါပြီ" : "Saved to favorites!");
     } catch(e) {
-      toast.error("Failed to save.");
+      toast.error(language === 'my' ? "မအောင်မြင်ပါ" : "Failed to save.");
     }
   };
 
   return (
-    <div className="flex gap-2">
+    <div className="flex gap-2 mt-4">
       <button onClick={handleCopy} className="flex-1 bg-gray-800 hover:bg-gray-700 py-3 rounded-xl flex items-center justify-center gap-2 text-sm font-bold transition-colors">
-        <Copy className="w-4 h-4" /> Copy
+        <Copy className="w-4 h-4" /> {language === 'my' ? 'ကူးယူရန်' : 'Copy'}
       </button>
       <button onClick={handleSave} className="flex-1 bg-pink-600 hover:bg-pink-500 py-3 rounded-xl flex items-center justify-center gap-2 text-sm font-bold transition-colors">
-        <Save className="w-4 h-4" /> Save
+        <Save className="w-4 h-4" /> {language === 'my' ? 'သိမ်းရန်' : 'Save'}
       </button>
+    </div>
+  );
+}
+
+function DownloaderTool() {
+  const [url, setUrl] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [videoData, setVideoData] = useState<any>(null);
+  const { appUser, language } = useStore();
+
+  const handleDownload = async () => {
+    if (!appUser?.isPremium) {
+      toast.error('This feature is only for Premium users!');
+      return;
+    }
+    
+    if (!url.trim() || !url.includes('tiktok')) {
+       return toast.error('Please enter a valid TikTok URL');
+    }
+
+    setLoading(true);
+    setVideoData(null);
+    try {
+      const res = await fetch(`https://www.tikwm.com/api/?url=${encodeURIComponent(url)}`);
+      const data = await res.json();
+      
+      if (data.code === 0 && data.data) {
+        setVideoData(data.data);
+        toast.success("Video fetched successfully!");
+      } else {
+        toast.error(data.msg || "Failed to fetch video");
+      }
+    } catch(e) {
+      toast.error("Network error. Please try again later.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (!appUser?.isPremium) {
+     return (
+       <div className="flex flex-col items-center justify-center h-64 text-center">
+         <div className="w-16 h-16 bg-gradient-to-tr from-green-500 to-emerald-600 rounded-2xl flex items-center justify-center mb-4">
+           <Lock className="w-8 h-8 text-white" />
+         </div>
+         <h3 className="text-xl font-bold mb-2">Premium Feature</h3>
+         <p className="text-sm text-gray-400 mb-6 max-w-xs">Upgrade to Premium to download TikTok videos without a watermark.</p>
+       </div>
+     );
+  }
+
+  return (
+    <div className="flex flex-col h-full gap-4 relative z-10">
+      <div>
+        <label className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2 block">TikTok Video URL</label>
+        <input 
+          type="text" placeholder="https://www.tiktok.com/@user/video/123..."
+          className="w-full bg-gray-900 border border-gray-700 rounded-xl p-4 text-white focus:outline-none focus:border-green-500/50"
+          value={url} onChange={e => setUrl(e.target.value)}
+        />
+      </div>
+      
+      <button 
+        onClick={handleDownload} disabled={loading}
+        className="w-full mt-4 bg-gradient-to-r from-green-500 to-emerald-600 text-white font-bold py-4 rounded-xl flex items-center justify-center gap-2 active:scale-95 disabled:opacity-50 transition-all shadow-[0_0_20px_rgba(16,185,129,0.2)]"
+      >
+        {loading ? <Loader2 className="animate-spin w-5 h-5" /> : (
+          <>
+            <DownloadCloud className="w-5 h-5" /> {language === 'my' ? 'ရယူမည်' : 'Fetch Video'}
+          </>
+        )}
+      </button>
+
+      {videoData && (
+        <div className="mt-4 bg-gray-900 border border-green-500/20 rounded-2xl p-4 flex flex-col items-center">
+          {videoData.cover && (
+             <img src={videoData.cover.startsWith('http') ? videoData.cover : "https://tikwm.com" + videoData.cover} alt="Cover" loading="lazy" className="w-full max-w-[200px] rounded-lg mb-4 shadow-lg object-cover" />
+          )}
+          <h3 className="text-sm font-medium text-gray-300 text-center mb-4 line-clamp-2">{videoData.title}</h3>
+          
+          <div className="flex gap-2 w-full">
+            <a 
+              href={videoData.play.startsWith('http') ? videoData.play : "https://tikwm.com" + videoData.play}
+              target="_blank" rel="noopener noreferrer"
+              className="flex-1 bg-white text-black py-3 rounded-xl flex items-center justify-center gap-2 text-sm font-bold active:scale-95 transition-transform"
+            >
+              <DownloadCloud className="w-4 h-4" /> {language === 'my' ? 'ဒေါင်းလုပ်ဆွဲရန်' : 'Download Video'}
+            </a>
+          </div>
+          <p className="text-[10px] text-gray-500 text-center mt-4">
+             Note: Due to device security, clicking download might open the video in a new tab. You can long-press to save it to your device.
+          </p>
+        </div>
+      )}
     </div>
   );
 }

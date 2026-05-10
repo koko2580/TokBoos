@@ -7,9 +7,18 @@ import { toast } from 'react-hot-toast';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export default function FavoritesPage() {
-  const { user } = useStore();
+  const { user, language } = useStore();
   const [favorites, setFavorites] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+
+  const text = {
+    title: language === 'my' ? 'သိမ်းထားသည်များ' : 'Saved',
+    desc: language === 'my' ? 'သင်ကြိုက်နှစ်သက်သော ဖန်တီးမှုများ' : 'Your favorite generations',
+    removed: language === 'my' ? 'ဖယ်ရှားပီးပါပြီ' : 'Removed from saved.',
+    failedDel: language === 'my' ? 'ဖျက်၍မရပါ' : 'Failed to delete.',
+    copied: language === 'my' ? 'ကူးယူပီးပါပြီ' : 'Copied!',
+    empty: language === 'my' ? 'သိမ်းထားသည်များ မရှိသေးပါ.' : 'No saved items yet.'
+  };
 
   useEffect(() => {
     if (!user) return;
@@ -32,26 +41,26 @@ export default function FavoritesPage() {
     try {
       await deleteDoc(doc(db, 'users', user.uid, 'favorites', id));
       setFavorites(f => f.filter(x => x.id !== id));
-      toast.success("Removed from saved.");
+      toast.success(text.removed);
     } catch(e) {
-      toast.error("Failed to delete.");
+      toast.error(text.failedDel);
     }
   };
 
-  const copyText = (text: string) => {
-    navigator.clipboard.writeText(text);
-    toast.success("Copied!");
+  const copyText = (textValue: string) => {
+    navigator.clipboard.writeText(textValue);
+    toast.success(text.copied);
   }
 
   return (
     <div className="p-6 pt-12 max-w-2xl mx-auto h-full flex flex-col relative z-10">
       <div className="flex items-center gap-3 mb-8">
-        <div className="p-3 bg-pink-500/20 rounded-xl">
-          <Bookmark className="text-pink-500 w-6 h-6" />
+        <div className="p-3 bg-gradient-to-tr from-pink-500 to-rose-600 rounded-xl shadow-lg shadow-pink-500/20">
+          <Bookmark className="text-white w-6 h-6" />
         </div>
         <div>
-          <h1 className="text-2xl font-black">Saved</h1>
-          <p className="text-xs text-gray-400">Your favorite generations</p>
+          <h1 className="text-2xl font-black font-display tracking-tight text-white">{text.title}</h1>
+          <p className="text-xs text-pink-400 font-medium">{text.desc}</p>
         </div>
       </div>
 
@@ -60,7 +69,7 @@ export default function FavoritesPage() {
       ) : favorites.length === 0 ? (
         <div className="text-center py-20 text-gray-500">
           <Bookmark className="w-12 h-12 mx-auto mb-4 opacity-20" />
-          <p>No saved items yet.</p>
+          <p>{text.empty}</p>
         </div>
       ) : (
         <div className="space-y-4 pb-20">

@@ -47,6 +47,16 @@ export async function generateBio(keywords: string): Promise<string> {
   return response.text?.trim() || "Failed to generate bio.";
 }
 
+export async function generateScript(topic: string): Promise<string> {
+  const ai = getAI();
+  const response = await ai.models.generateContent({
+    model: "gemini-3.1-flash-lite", // fast model
+    contents: `Write a punchy, highly engaging 60-second TikTok video script about: ${topic}. 
+Outline the visual cues in brackets [like this] and the spoken audio directly. Keep sentences short and fast-paced. Just return the script text.`,
+  });
+  return response.text?.trim() || "Failed to generate script.";
+}
+
 export async function generateVideoIdea(niche: string): Promise<{title: string, hook: string, description: string}> {
   const ai = getAI();
   const response = await ai.models.generateContent({

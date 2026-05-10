@@ -1,19 +1,28 @@
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { Sparkles, Hash, Edit3, Video, Play, Gem, Coins } from 'lucide-react';
+import { Sparkles, Hash, Edit3, Video, Play, Gem, Coins, Download } from 'lucide-react';
 import { useStore } from '../store';
 import { toast } from 'react-hot-toast';
 import { showRewardedAd } from '../lib/admob';
 
 export default function HomePage() {
   const navigate = useNavigate();
-  const { appUser } = useStore();
+  const { appUser, language } = useStore();
+
+  const text = {
+    creatorToolkit: language === 'my' ? 'ဖန်တီးရှင်များအတွက်' : 'Creator Toolkit',
+    watchAdTitle: language === 'my' ? 'ကြော်ငြာကြည့်ရန် (20 Coins)' : 'Watch Ad for 20 Coins',
+    watchAdDesc: language === 'my' ? 'အခမဲ့ အကြွေစေ့များရယူပါ' : 'Free daily generations',
+    watchBtn: language === 'my' ? 'ကြည့်ရန်' : 'Watch',
+    aiGenerators: language === 'my' ? 'AI တူးလ်များ' : 'AI Generators',
+  };
 
   const tools = [
-    { id: 'caption', name: 'Caption Generator', icon: Edit3, color: 'from-pink-500 to-rose-400', desc: 'Viral hooks & engaging texts' },
-    { id: 'hashtag', name: 'Trending Hashtags', icon: Hash, color: 'from-cyan-400 to-blue-500', desc: 'Algorithm friendly tags' },
-    { id: 'bio', name: 'Aesthetic Bios', icon: Sparkles, color: 'from-purple-500 to-pink-500', desc: 'Profile makeovers' },
-    { id: 'idea', name: 'Video Ideas', icon: Video, color: 'from-amber-400 to-orange-500', desc: 'Never run out of content' },
+    { id: 'caption', name: language === 'my' ? 'စာတမ်း ဖန်တီးရန်' : 'Caption Generator', icon: Edit3, color: 'from-pink-500 to-rose-400', desc: language === 'my' ? 'ဆွဲဆောင်မှုရှိသော စာသားများ' : 'Viral hooks & engaging texts' },
+    { id: 'hashtag', name: language === 'my' ? 'ရေပန်းစား Hashtagများ' : 'Trending Hashtags', icon: Hash, color: 'from-cyan-400 to-blue-500', desc: language === 'my' ? 'TikTok အတွက်' : 'Algorithm friendly tags' },
+    { id: 'bio', name: language === 'my' ? 'ဆွဲဆောင်မှုရှိသော Bio' : 'Aesthetic Bios', icon: Sparkles, color: 'from-purple-500 to-pink-500', desc: language === 'my' ? 'ပရိုဖိုင် အသစ်' : 'Profile makeovers' },
+    { id: 'idea', name: language === 'my' ? 'ဗီဒီယို အကြံဉာဏ်များ' : 'Video Ideas', icon: Video, color: 'from-amber-400 to-orange-500', desc: language === 'my' ? 'အမြဲတမ်း အသစ်' : 'Never run out of content' },
+    { id: 'downloader', name: language === 'my' ? 'ဗီဒီယို ဒေါင်းလုပ်' : 'Video Downloader', icon: Download, color: 'from-green-400 to-emerald-500', desc: language === 'my' ? 'Watermark မပါ (PRO)' : 'No watermark (PRO)' },
   ];
 
   const handleWatchAd = () => {
@@ -39,8 +48,8 @@ export default function HomePage() {
     >
       <header className="flex justify-between items-center mb-8">
         <div>
-          <h1 className="text-2xl font-black italic tracking-tight">Tok<span className="text-pink-500">Boost</span></h1>
-          <p className="text-xs text-gray-400">Creator Toolkit</p>
+          <h1 className="text-2xl font-black italic tracking-tight font-display">Tok<span className="text-pink-500">Boost</span></h1>
+          <p className="text-xs text-gray-400">{text.creatorToolkit}</p>
         </div>
         <div className="flex gap-2">
           {appUser?.isPremium ? (
@@ -68,17 +77,17 @@ export default function HomePage() {
               <Play className="w-5 h-5 text-yellow-400" fill="currentColor" />
             </div>
             <div>
-              <h3 className="font-bold text-sm text-white">Watch Ad for 20 Coins</h3>
-              <p className="text-xs text-gray-400">Free daily generations</p>
+              <h3 className="font-bold text-sm text-white">{text.watchAdTitle}</h3>
+              <p className="text-xs text-gray-400">{text.watchAdDesc}</p>
             </div>
           </div>
           <button className="bg-white text-black text-xs font-bold px-4 py-2 rounded-full">
-            Watch
+            {text.watchBtn}
           </button>
         </motion.div>
       )}
 
-      <h2 className="text-lg font-bold mb-4">AI Generators</h2>
+      <h2 className="text-lg font-bold mb-4">{text.aiGenerators}</h2>
       <div className="grid grid-cols-2 gap-4">
         {tools.map((tool, index) => {
           const Icon = tool.icon;

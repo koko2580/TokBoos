@@ -12,6 +12,7 @@ export async function initializeAdMob() {
   if (Capacitor.isNativePlatform()) {
     try {
       await AdMob.initialize({
+        // @ts-ignore
         requestTrackingAuthorization: true,
         testingDevices: [],
         initializeForTesting: false,
@@ -21,6 +22,7 @@ export async function initializeAdMob() {
     }
   }
 }
+
 
 export async function showBannerAd() {
   if (Capacitor.isNativePlatform()) {
@@ -61,6 +63,7 @@ export async function showInterstitialAd(): Promise<void> {
       };
       try {
         await AdMob.prepareInterstitial(options);
+        // @ts-ignore
         AdMob.addListener('onAdDismissedFullScreenContent', () => {
             resolve();
         });
@@ -87,10 +90,12 @@ export async function showRewardedAd(onReward: () => void, onCloseMap: () => voi
       isTesting: false,
     };
     
+    // @ts-ignore
     AdMob.addListener('onRewardedVideoAdReward', () => {
       onReward();
     });
     
+    // @ts-ignore
     AdMob.addListener('onRewardedVideoAdDismissed', () => {
       onCloseMap();
     });

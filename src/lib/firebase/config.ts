@@ -1,8 +1,7 @@
 import { initializeApp } from 'firebase/app';
-import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, signOut, getRedirectResult } from 'firebase/auth';
+import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut } from 'firebase/auth';
 import { getFirestore, doc, getDoc, setDoc, getDocFromServer } from 'firebase/firestore';
 import firebaseConfig from '../../../firebase-applet-config.json';
-import { Capacitor } from '@capacitor/core';
 
 const app = initializeApp(firebaseConfig);
 export const db = getFirestore(app, firebaseConfig.firestoreDatabaseId);
@@ -22,28 +21,27 @@ export async function testFirestoreConnection() {
 
 testFirestoreConnection();
 
-export async function loginWithGoogle() {
-  try {
-    if (Capacitor.isNativePlatform()) {
-      await signInWithRedirect(auth, googleProvider);
-      return null; // The app will redirect, so no immediate user
-    } else {
-      const result = await signInWithPopup(auth, googleProvider);
-      return result.user;
-    }
-  } catch (error) {
-    console.error("Login failed", error);
-    throw error;
-  }
+export async function loginWithEmail(email: string, pass: string) {
+  const result = await signInWithEmailAndPassword(auth, email, pass);
+  return result.user;
 }
 
-export async function checkRedirectResult() {
+export async function registerWithEmail(email: string, pass: string) {
+  const result = await createUserWithEmailAndPassword(auth, email, pass);
+  return result.user;
+}
+
+export async function loginWithGoogle() {
   try {
-    const result = await getRedirectResult(auth);
-    return result?.user || null;
-  } catch (error) {
-    console.error("Redirect login failed", error);
-    return null;
+    const result = await signInWithPopup(auth, googleProvider);
+    return result.user;
+  } catch (error: any) {
+    console.error("Login failed", error);
+    // Throw a friendlier error if it's environment related
+    if (error.code === 'auth/operation-not-supported-in-this-environment') {
+      throw new Error("Google Login is not supported in this app preview. Please use Email/Password if available or run on the web.");
+    }
+    throw error;
   }
 }
 
